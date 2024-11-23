@@ -5,27 +5,32 @@ import postModel from "../../../db/models/post_modal.js"
 export const createPost = async (req, res, next) => {
 
     const post = await postModel.create({
-        postImage: req.files?.postImage?.map((e) => "https://shaaban-facebook-node.up.railway.app/" + e.path),
+        // postImage: req.files?.postImage?.map((e) => "https://shaaban-facebook-node.up.railway.app/" + e.path),
+        postImage: req.files?.postImage ? req.files?.postImage?.map((e) => "http://localhost:5000/" + e.path) : null,
         postContent: req.body.postContent,
         likes: req.body.likes,
         unLikes: req.body.unLikes,
         userId: req.user.id
     })
     if (!post) return next(new Error("fail to create post"))
-    res.json({ message: "success", post })
+        const getAllPosts = await postModel.find().populate("userId").sort({ createdAt: -1 })
+    if (getAllPosts.length == 0) return next(new Error("no posts available"))
+        res.json({ message: "success", results: getAllPosts.length, getAllPosts })
+        
+        // res.json({ message: "success", post })
 }
 
 // ========================================================================================
 export const getAllPosts = async (req, res, next) => {
-    const post = await postModel.find().populate("userId").sort({ createdAt: -1 })
-    if (post.length == 0) return next(new Error("no posts available"))
-    res.json({ message: "success", results: post.length, post })
+    const getAllPosts = await postModel.find().populate("userId").sort({ createdAt: -1 })
+    if (getAllPosts.length == 0) return next(new Error("no posts available"))
+        res.json({ message: "success", results: getAllPosts.length, getAllPosts })
 }
 // ========================================================================================
 export const getUserPosts = async (req, res, next) => {
     const post = await postModel.find({ userId: req.user.id })
     if (post.length == 0) return next(new Error("no posts available"))
-    res.json({ message: "success", results: post.length, post })
+        res.json({ message: "success", results: post.length, post })
 }
 
 
@@ -39,12 +44,13 @@ export const deleteOnePost = async (req, res, next) => {
 // ======================================================
 
 export const editPost = async (req, res, next) => {
-
+    
     const updatePost = await postModel.findOneAndUpdate(
         { userId: req.user.id, _id: req.params.postId },
         {
             postContent: req?.body?.postContent,
-            postImage: req?.files?.postImage?.map((e) => "https://shaaban-facebook-node.up.railway.app/" + e.path),
+            // postImage: req?.files?.postImage?.map((e) => "https://shaaban-facebook-node.up.railway.app/" + e.path),
+            postImage: req?.files?.postImage?.map((e) => "http://localhost:5000/" + e.path),
         }, { new: true }
 
     )
